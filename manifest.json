@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "LeetCode Problem Finder",
+  "version": "1.0",
+  "description": "Identifies LeetCode problems by title and fetches problem links",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "contextMenus",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://leetcode.com/*",
+    "https://leetcode.cn/*",
+    "https://*.leetcode.com/*",
+    "https://leetcode-api-pied.vercel.app/*",
+    "https://takeuforward.org/*"
+  ],
+  "icons": {
+    "16": "assets/icon.png",
+    "48": "assets/icon.png",
+    "128": "assets/icon.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Find LeetCode Problem",
+    "default_icon": {
+      "16": "assets/icon.png",
+      "48": "assets/icon.png",
+      "128": "assets/icon.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://takeuforward.org/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
