@@ -1,9 +1,15 @@
 # LeetCode Problem Finder Chrome Extension
 
 A Chrome extension that helps you quickly find and access LeetCode problems by their titles. Designed with enhanced integration for TakeUForward's DSA problem pages.
+
+
 **Demo**
 
 <img width="989" height="207" alt="Screenshot 2025-08-23 185634" src="https://github.com/user-attachments/assets/4c805e88-4449-4b43-95c5-e202da13e0d8" />
+
+## Click on icon to search problems automatically or you can use search feature in extension make sure you enter the exact problem title manually.
+
+
 <img width="1919" height="915" alt="Screenshot 2025-08-23 185611" src="https://github.com/user-attachments/assets/c69e2833-832a-4d1c-998a-2fa31577bfaa" />
 
 
