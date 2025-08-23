@@ -1,16 +1,11 @@
 # LeetCode Problem Finder Chrome Extension
 
 A Chrome extension that helps you quickly find and access LeetCode problems by their titles. Designed with enhanced integration for TakeUForward's DSA problem pages.
+**Demo**
 
-## 🚀 Features
+<img width="989" height="207" alt="Screenshot 2025-08-23 185634" src="https://github.com/user-attachments/assets/4c805e88-4449-4b43-95c5-e202da13e0d8" />
+<img width="1919" height="915" alt="Screenshot 2025-08-23 185611" src="https://github.com/user-attachments/assets/c69e2833-832a-4d1c-998a-2fa31577bfaa" />
 
-- **Instant Problem Search**: Search for LeetCode problems by title with high accuracy matching
-- **TakeUForward Integration**: Seamless integration with TakeUForward problem pages
-- **Smart Detection**: Automatically detects problem titles on supported websites
-- **Context Menu**: Right-click on selected text to search for LeetCode problems
-- **Statistics Dashboard**: View LeetCode database statistics (total, free, premium problems)
-- **Page Refresh Helper**: Automatic refresh suggestions when problem detection fails
-- **Multiple Matching Strategies**: Exact, starts-with, and contains matching for better results
 
 ## 📋 How It Works
 
@@ -24,12 +19,6 @@ A Chrome extension that helps you quickly find and access LeetCode problems by t
 - Click the extension icon in your browser toolbar
 - Enter a LeetCode problem title manually
 - View search results with problem details and direct links
-- Access LeetCode database statistics
-
-### 3. **Context Menu**
-- Select any text on any webpage
-- Right-click and choose "Search [selected text] on LeetCode"
-- The extension popup opens with the selected text pre-filled
 
 ### 4. **Other Websites**
 - The extension automatically highlights detected LeetCode problem titles
@@ -78,12 +67,6 @@ A Chrome extension that helps you quickly find and access LeetCode problems by t
 3. Look for the blue search button next to the problem title
 4. Click to instantly find the LeetCode equivalent
 
-### Context Menu Search
-1. Select any text on a webpage that might be a LeetCode problem title
-2. Right-click the selected text
-3. Choose "Search '[selected text]' on LeetCode"
-4. The extension popup opens with results
-
 ### Troubleshooting
 - **Problem not detected**: Use the refresh button to reload the page
 - **No results found**: Try variations of the problem title
@@ -106,11 +89,9 @@ A Chrome extension that helps you quickly find and access LeetCode problems by t
 - `storage`: Store temporary search data
 - `contextMenus`: Add right-click search option
 - `tabs`: Refresh pages when needed
-- `host_permissions`: Access LeetCode and TakeUForward domains
 
 ### API Integration
 - Uses LeetCode API (`leetcode-api-pied.vercel.app`) for problem data
-- Implements smart matching algorithms for accurate results
 - Handles rate limiting and error cases gracefully
 
 ### Matching Strategies
@@ -118,24 +99,11 @@ A Chrome extension that helps you quickly find and access LeetCode problems by t
 2. **Starts With**: Problem title starts with search term (4+ characters)
 3. **Contains**: Search term contained in title (10+ characters, very strict)
 
-## 🎨 Features in Detail
-
-### Smart Problem Detection
-- Automatically detects LeetCode problem patterns on web pages
-- Supports multiple title formats (numbered, "Problem:", etc.)
-- Filters out false positives with length and pattern validation
-
-### Enhanced TakeUForward Experience
-- Seamless integration with TakeUForward's problem page layout
-- Automatic button placement next to problem titles
-- Visual feedback with loading states and error handling
-- Refresh functionality when detection fails
-
 ### User-Friendly Interface
 - Clean, modern dark theme design
 - Responsive button interactions with hover effects
 - Clear error messages and helpful guidance
-- Statistics dashboard for LeetCode database insights
+
 
 ### Error Handling
 - Graceful handling of network failures
@@ -143,13 +111,6 @@ A Chrome extension that helps you quickly find and access LeetCode problems by t
 - Automatic retry suggestions with refresh functionality
 - Fallback detection methods for different page layouts
 
-## 🔄 Updates and Maintenance
-
-The extension automatically handles:
-- API endpoint changes
-- Website layout updates
-- Performance optimizations
-- Bug fixes and improvements
 
 ## 🤝 Contributing
 
@@ -159,9 +120,6 @@ Feel free to contribute to this project by:
 - Improving the code
 - Adding support for more websites
 
-## 📝 License
-
-This project is open source and available under the MIT License.
 
 ## 🆘 Support
 
