@@ -1,33 +1,94 @@
 // Content script to detect LeetCode problems on TakeUForward website
 (function() {
+  console.log('TufToLeetcode content script loaded on:', window.location.href);
+  
   // Check if we're on TakeUForward website
   function isTakeUForwardSite() {
-    return window.location.hostname === 'takeuforward.org';
+    const isTuf = window.location.hostname === 'takeuforward.org';
+    console.log('Is TakeUForward site:', isTuf);
+    return isTuf;
   }
 
   // Extract problem title from TakeUForward's specific HTML structure
   function extractTakeUForwardTitle() {
     if (!isTakeUForwardSite()) return null;
 
-    // Look for the specific span with problem title
-    const titleElement = document.querySelector('span.text-2xl.font-bold.text-new_primary.dark\\:text-new_dark_primary');
-    
-    if (titleElement) {
-      return titleElement.textContent.trim();
-    }
-
-    // Fallback: look for any h1 or large text that might be the title
-    const fallbackSelectors = [
+    // Multiple selectors to try for the title
+    const titleSelectors = [
+      'span.text-2xl.font-bold.text-new_primary.dark\\:text-new_dark_primary',
+      'span.text-2xl.font-bold',
+      '.text-2xl.font-bold',
+      'h1.text-2xl',
       'h1',
+      '[class*="text-2xl"][class*="font-bold"]',
       '.text-2xl',
-      '[class*="text-2xl"]',
       '[class*="font-bold"]'
     ];
 
-    for (const selector of fallbackSelectors) {
+    for (const selector of titleSelectors) {
+      try {
+        const titleElement = document.querySelector(selector);
+        if (titleElement) {
+          const title = titleElement.textContent.trim();
+          // Validate that this looks like a problem title
+          if (title.length > 3 && title.length < 100 && !title.includes('TakeUForward')) {
+            console.log('Found title with selector:', selector, 'Title:', title);
+            return title;
+          }
+        }
+      } catch (e) {
+        console.log('Error with selector:', selector, e);
+      }
+    }
+
+    // Last resort: look for any text that looks like a problem title
+    const allElements = document.querySelectorAll('*');
+    for (const element of allElements) {
+      const text = element.textContent?.trim();
+      if (text && text.length > 5 && text.length < 100) {
+        // Check if it looks like a problem title (starts with capital, has spaces)
+        if (/^[A-Z][a-zA-Z\s]+$/.test(text) && !text.includes('TakeUForward') && !text.includes('Login')) {
+          console.log('Found potential title:', text);
+          return text;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  // Extract problem description from TakeUForward's HTML structure
+  function extractTakeUForwardDescription() {
+    if (!isTakeUForwardSite()) return null;
+
+    // Look for the problem description in various possible containers
+    const descriptionSelectors = [
+      '.text-new_secondary.text-\\[14px\\].dark\\:text-zinc-200 p',
+      '.mt-6.w-full.text-new_secondary.text-\\[14px\\].dark\\:text-zinc-200',
+      '[class*="text-new_secondary"][class*="text-[14px]"]',
+      '.problem-description',
+      '.description'
+    ];
+
+    for (const selector of descriptionSelectors) {
       const element = document.querySelector(selector);
-      if (element && element.textContent.trim().length > 3) {
-        return element.textContent.trim();
+      if (element) {
+        let description = element.innerHTML || element.textContent;
+        // Clean up the description
+        description = description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+        if (description.length > 50) {
+          return description;
+        }
+      }
+    }
+
+    // Fallback: look for any div that contains problem-like text
+    const allDivs = document.querySelectorAll('div');
+    for (const div of allDivs) {
+      const text = div.textContent.trim();
+      if (text.length > 100 && text.length < 2000 && 
+          (text.includes('Given') || text.includes('Return') || text.includes('Find'))) {
+        return text;
       }
     }
 
@@ -74,6 +135,10 @@
     if (request.action === 'detectTitles') {
       const titles = detectProblemTitles();
       sendResponse({ titles });
+    } else if (request.action === 'extractProblemData') {
+      const title = extractTakeUForwardTitle();
+      const description = extractTakeUForwardDescription();
+      sendResponse({ title, description });
     }
   });
 
@@ -244,12 +309,40 @@
   function createTakeUForwardButton() {
     if (!isTakeUForwardSite()) return;
 
-    // Check if button already exists
-    if (document.getElementById('leetcode-finder-btn')) return;
+    // Check if our button already exists
+    if (document.getElementById('tuf-to-leetcode-btn')) return;
+    
+    // Also check for any existing leetcode helper buttons and remove them to avoid conflicts
+    const existingButtons = document.querySelectorAll('.leetcode-helper-title-btn, #leetcode-finder-btn');
+    existingButtons.forEach(btn => btn.remove());
 
     // Find the title element to position button next to it
-    const titleElement = document.querySelector('span.text-2xl.font-bold.text-new_primary.dark\\:text-new_dark_primary');
-    if (!titleElement) return;
+    const titleSelectors = [
+      'span.text-2xl.font-bold.text-new_primary.dark\\:text-new_dark_primary',
+      'span.text-2xl.font-bold',
+      '.text-2xl.font-bold',
+      'h1.text-2xl',
+      'h1',
+      '[class*="text-2xl"][class*="font-bold"]'
+    ];
+
+    let titleElement = null;
+    for (const selector of titleSelectors) {
+      try {
+        titleElement = document.querySelector(selector);
+        if (titleElement) {
+          console.log('Found title element with selector:', selector);
+          break;
+        }
+      } catch (e) {
+        console.log('Error with title selector:', selector, e);
+      }
+    }
+
+    if (!titleElement) {
+      console.log('No title element found, will retry...');
+      return;
+    }
 
     // Create button container
     const buttonContainer = document.createElement('div');
@@ -261,7 +354,7 @@
     `;
 
     const button = document.createElement('button');
-    button.id = 'leetcode-finder-btn';
+    button.id = 'tuf-to-leetcode-btn';
     button.innerHTML = `
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
         <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" fill="none"/>
@@ -308,7 +401,9 @@
       e.stopPropagation();
       
       const title = extractTakeUForwardTitle();
-      if (title) {
+      const description = extractTakeUForwardDescription();
+      
+      if (title || description) {
         // Show loading state
         button.innerHTML = `
           <div style="width: 12px; height: 12px; border: 2px solid rgba(255, 255, 255, 0.3); border-top: 2px solid #ffffff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
@@ -317,10 +412,11 @@
         button.style.background = '#6366f1';
         button.style.opacity = '1';
 
-        // Send message to background script
+        // Send message to background script with both title and description
         chrome.runtime.sendMessage({
           action: 'searchProblem',
-          title: title
+          title: title,
+          description: description
         });
 
         // Reset button after 2 seconds
@@ -353,13 +449,74 @@
 
     // Add button to container and insert next to title
     buttonContainer.appendChild(button);
-    titleElement.parentNode.insertBefore(buttonContainer, titleElement.nextSibling);
+    
+    try {
+      // Try different positioning strategies
+      if (titleElement.nextSibling) {
+        titleElement.parentNode.insertBefore(buttonContainer, titleElement.nextSibling);
+      } else {
+        titleElement.parentNode.appendChild(buttonContainer);
+      }
+      console.log('Button successfully added to page');
+    } catch (e) {
+      console.error('Error inserting button:', e);
+      
+      // Fallback: try appending to title element's parent
+      try {
+        titleElement.parentNode.appendChild(buttonContainer);
+        console.log('Button added using fallback method');
+      } catch (e2) {
+        console.error('Fallback button insertion failed:', e2);
+        
+        // Last resort: add to body with fixed positioning
+        buttonContainer.style.position = 'fixed';
+        buttonContainer.style.top = '20px';
+        buttonContainer.style.right = '20px';
+        buttonContainer.style.zIndex = '9999';
+        document.body.appendChild(buttonContainer);
+        console.log('Button added with fixed positioning');
+      }
+    }
   }
 
-  // Initialize based on site
+  // Initialize based on site with multiple retry attempts
   if (isTakeUForwardSite()) {
-    // For TakeUForward, create the floating button
-    setTimeout(createTakeUForwardButton, 1000);
+    console.log('TakeUForward site detected, initializing button...');
+    
+    // Try multiple times with increasing delays to handle dynamic content
+    const retryAttempts = [500, 1000, 2000, 3000, 5000];
+    
+    retryAttempts.forEach((delay, index) => {
+      setTimeout(() => {
+        console.log(`Attempt ${index + 1} to create button after ${delay}ms`);
+        createTakeUForwardButton();
+      }, delay);
+    });
+
+    // Also try when DOM changes (for dynamic content)
+    const observer = new MutationObserver((mutations) => {
+      let shouldRetry = false;
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          shouldRetry = true;
+        }
+      });
+      
+      if (shouldRetry && !document.getElementById('leetcode-finder-btn')) {
+        console.log('DOM changed, retrying button creation...');
+        setTimeout(createTakeUForwardButton, 1000);
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    // Stop observing after 30 seconds
+    setTimeout(() => {
+      observer.disconnect();
+    }, 30000);
   } else {
     // For other sites, use the highlighting feature
     setTimeout(highlightProblemTitles, 2000);

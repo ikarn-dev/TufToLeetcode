@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "LeetCode Problem Finder",
+  "name": "TufToLeetcode",
   "version": "1.0",
-  "description": "Identifies LeetCode problems by title and fetches problem links",
+  "description": "Bridge between TakeUForward and LeetCode - Find and analyze problems seamlessly",
   "permissions": [
     "activeTab",
     "storage",
     "contextMenus",
-    "tabs"
+    "tabs",
+    "alarms"
   ],
   "host_permissions": [
     "https://leetcode.com/*",
@@ -23,7 +24,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Find LeetCode Problem",
+    "default_title": "TufToLeetcode",
     "default_icon": {
       "16": "assets/icon.png",
       "48": "assets/icon.png",
@@ -38,5 +39,11 @@
   ],
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["leetcode-data.json"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
