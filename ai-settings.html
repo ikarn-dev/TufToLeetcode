@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="ai-settings.css">
+  <title>AI Settings - TufToLeetcode</title>
+</head>
+<body>
+  <div class="header">
+    <h1>
+      <div class="logo">
+        <img src="assets/icon.png" alt="TufToLeetcode" width="20" height="20" style="border-radius: 4px;">
+      </div>
+      AI Settings
+    </h1>
+  </div>
+
+  <div class="container">
+    <div class="settings-section">
+      <div class="section-header">
+        <h2>AI Configuration</h2>
+        <p>Configure your Google Gemini API key to enable AI-powered problem analysis</p>
+      </div>
+
+      <div class="input-group">
+        <label for="apiKey">Google Gemini API Key</label>
+        <div class="input-with-button">
+          <input type="password" id="apiKey" placeholder="Enter your Gemini API key...">
+          <button id="toggleVisibility" class="toggle-btn" title="Show/Hide API Key">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+        <div class="input-help">
+          Your API key is stored locally and never shared. 
+          <a href="https://aistudio.google.com/app/apikey" target="_blank">Get your Gemini API key here</a>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button id="saveKey" class="btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17,21 17,13 7,13 7,21"/>
+            <polyline points="7,3 7,8 15,8"/>
+          </svg>
+          Save API Key
+        </button>
+        <button id="testKey" class="btn-secondary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 12l2 2 4-4"/>
+            <circle cx="12" cy="12" r="10"/>
+          </svg>
+          Test Connection
+        </button>
+        <button id="clearKey" class="btn-danger">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3,6 5,6 21,6"/>
+            <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2"/>
+          </svg>
+          Clear Key
+        </button>
+      </div>
+
+      <div id="status" class="status-message"></div>
+
+      <div class="api-key-history">
+        <div class="history-title">Recent API Keys</div>
+        <div id="keyHistoryList" class="key-history-list">
+          <!-- API key history will be populated here -->
+        </div>
+      </div>
+    </div>
+
+    <div class="usage-section">
+      <div class="section-header">
+        <h2>🚀 How to Use</h2>
+      </div>
+      
+      <ol class="usage-steps">
+        <li>Get your Gemini API key from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a></li>
+        <li>Enter and save your API key above</li>
+        <li>Visit any problem page on TakeUForward</li>
+        <li>Click the AI icon (✨) next to the problem title</li>
+        <li>View comprehensive Gemini AI analysis with verified results</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="ai-settings.js"></script>
+</body>
+</html>

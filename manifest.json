@@ -15,7 +15,8 @@
     "https://leetcode.cn/*",
     "https://*.leetcode.com/*",
     "https://leetcode-api-pied.vercel.app/*",
-    "https://takeuforward.org/*"
+    "https://takeuforward.org/*",
+    "https://generativelanguage.googleapis.com/*"
   ],
   "icons": {
     "16": "assets/icon.png",
@@ -42,7 +43,10 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["leetcode-data.json"],
+      "resources": [
+        "leetcode-data.json",
+        "ai-overlay.css"
+      ],
       "matches": ["<all_urls>"]
     }
   ]

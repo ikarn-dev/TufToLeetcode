@@ -12,22 +12,22 @@ function keepServiceWorkerAlive() {
   if (keepAliveInterval) {
     clearInterval(keepAliveInterval);
   }
-  
+
   keepAliveInterval = setInterval(() => {
     // Perform a lightweight operation to keep the service worker active
-    chrome.storage.local.set({ 
+    chrome.storage.local.set({
       keepAlive: Date.now(),
       lastActivity: new Date().toISOString()
     });
   }, 25000); // Every 25 seconds
-  
+
   // Strategy 2: Use alarms for more persistent keep-alive
   chrome.alarms.clear('keepAlive');
   chrome.alarms.create('keepAlive', {
     delayInMinutes: 0.5, // 30 seconds
     periodInMinutes: 0.5
   });
-  
+
   console.log('Service worker keep-alive mechanisms activated');
 }
 
@@ -39,7 +39,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
       alarmKeepAlive: Date.now(),
       serviceWorkerStatus: 'active'
     });
-    
+
     // Ensure data is still loaded
     if (!leetcodeData) {
       console.log('Data not loaded, reloading...');
@@ -51,22 +51,22 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 // Load the local data on startup
 async function loadLeetCodeData() {
   dataLoadingAttempts++;
-  
+
   try {
     console.log(`Attempting to load LeetCode data (attempt ${dataLoadingAttempts}/${MAX_LOADING_ATTEMPTS})`);
-    
+
     const response = await fetch(chrome.runtime.getURL('leetcode-data.json'));
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
+
     // Validate the data structure
     if (Array.isArray(data) && data.length > 0) {
       leetcodeData = data;
       console.log('LeetCode data loaded successfully:', leetcodeData.length, 'problems');
-      
+
       // Validate first few items to ensure proper structure
       const sampleProblem = leetcodeData[0];
       if (!sampleProblem.title || !sampleProblem.topics || !Array.isArray(sampleProblem.topics)) {
@@ -78,7 +78,7 @@ async function loadLeetCodeData() {
   } catch (error) {
     console.error(`Failed to load local LeetCode data (attempt ${dataLoadingAttempts}):`, error);
     leetcodeData = null; // Ensure it's null on failure
-    
+
     // Retry loading if we haven't exceeded max attempts
     if (dataLoadingAttempts < MAX_LOADING_ATTEMPTS) {
       console.log(`Retrying data load in 2 seconds...`);
@@ -93,10 +93,10 @@ async function loadLeetCodeData() {
 loadLeetCodeData();
 keepServiceWorkerAlive();
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   // Keep service worker alive when receiving messages
   keepServiceWorkerAlive();
-  
+
   if (request.action === 'searchProblem') {
     // Open popup when a problem title is clicked from content script
     chrome.action.openPopup();
@@ -141,6 +141,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       count: leetcodeData ? leetcodeData.length : 0,
       attempts: dataLoadingAttempts
     });
+  } else if (request.action === 'openAISettings') {
+    // Open AI settings page
+    chrome.tabs.create({
+      url: chrome.runtime.getURL('ai-settings.html')
+    });
+  } else if (request.action === 'analyzeWithAI') {
+    // Handle AI analysis request
+    analyzeWithAI(request.title, request.description).then(result => {
+      sendResponse({ success: true, data: result });
+    }).catch(error => {
+      console.error('Error in AI analysis:', error);
+      sendResponse({ success: false, error: error.message });
+    });
+    return true; // Keep message channel open for async response
   }
 });
 
@@ -312,14 +326,14 @@ async function analyzeProblemDescription(description) {
   // Extract key phrases and concepts from the description
   const keyPhrases = extractKeyPhrases(cleanDescription);
   const semanticKeywords = extractSemanticKeywords(cleanDescription);
-  
+
   // Find problems with similar descriptions
   const matches = [];
   const topicCounts = {};
 
   for (const problem of leetcodeData) {
     if (!problem.description) continue;
-    
+
     const problemDesc = problem.description.toLowerCase();
     let score = 0;
     let matchedPhrases = [];
@@ -427,9 +441,9 @@ function extractKeyPhrases(description) {
       const phrase = words.slice(i, i + len).join(' ');
       if (phrase.length > 10 && phrase.length < 50) {
         // Filter out common but non-specific phrases
-        if (!phrase.includes('given') && !phrase.includes('return') && 
-            !phrase.includes('example') && !phrase.includes('input') &&
-            !phrase.includes('output') && !phrase.includes('constraint')) {
+        if (!phrase.includes('given') && !phrase.includes('return') &&
+          !phrase.includes('example') && !phrase.includes('input') &&
+          !phrase.includes('output') && !phrase.includes('constraint')) {
           keyPhrases.push(phrase);
         }
       }
@@ -442,7 +456,7 @@ function extractKeyPhrases(description) {
 
 function extractSemanticKeywords(description) {
   const keywords = [];
-  
+
   // Data structure indicators
   const dataStructures = {
     'array': ['array', 'list', 'nums', 'arr'],
@@ -480,7 +494,7 @@ function extractSemanticKeywords(description) {
 
   const allCategories = { ...dataStructures, ...operations, ...problemTypes };
 
-  for (const [category, terms] of Object.entries(allCategories)) {
+  for (const [_category, terms] of Object.entries(allCategories)) {
     for (const term of terms) {
       if (description.includes(term)) {
         keywords.push(term);
@@ -494,7 +508,7 @@ function extractSemanticKeywords(description) {
 function calculateStructuralSimilarity(desc1, desc2) {
   // Check for similar sentence structures and patterns
   let score = 0;
-  
+
   // Common problem statement patterns
   const patterns = [
     /given.*array.*integer/,
@@ -520,21 +534,247 @@ function calculateStructuralSimilarity(desc1, desc2) {
 function calculatePatternSimilarity(desc1, desc2) {
   // Check for common algorithmic patterns
   let score = 0;
-  
+
   const commonWords = ['array', 'integer', 'target', 'index', 'find', 'return', 'given'];
   let matchCount = 0;
-  
+
   for (const word of commonWords) {
     if (desc1.includes(word) && desc2.includes(word)) {
       matchCount++;
     }
   }
-  
+
   // Score based on percentage of common words
   score = (matchCount / commonWords.length) * 3;
-  
+
   return score;
 }
+
+async function analyzeWithAI(title, description) {
+  // Get API key from storage
+  const result = await chrome.storage.local.get(['geminiApiKey']);
+  const apiKey = result.geminiApiKey;
+
+  if (!apiKey || apiKey.trim().length === 0) {
+    throw new Error('API key not configured. Please set your Gemini API key in the extension settings.');
+  }
+
+  // Generate optimized AI prompt for accurate analysis
+  const prompt = `You are a LeetCode problem expert with deep knowledge of all LeetCode problems. Your PRIMARY GOAL is to find this exact problem on LeetCode.
+
+PROBLEM TO ANALYZE:
+Title: "${title}"
+Description: "${description}"
+
+ANALYSIS STRATEGY:
+1. FIRST: Analyze the DESCRIPTION thoroughly - the title might be misleading or different from LeetCode's title
+2. Look for key algorithmic patterns, data structures, and problem constraints in the description
+3. Match the core problem logic, not just the title
+4. The problem might have a completely different title on LeetCode but same core logic
+
+CRITICAL INSTRUCTIONS:
+- FOCUS EXCLUSIVELY ON LEETCODE - This is a LeetCode-focused extension
+- If this problem exists on LeetCode, provide the EXACT LeetCode URL in "leetcode_link"
+- The title provided might NOT match LeetCode's title - analyze the DESCRIPTION to find the real problem
+- Find similar LeetCode problems based on algorithmic approach and problem pattern
+- NEVER include HackerRank, CodeChef, GeeksforGeeks, or any other platforms
+- ALL problems must be from LeetCode only
+- Provide accurate complexity analysis for the optimal solution
+
+MATCHING EXAMPLES (Title might differ, focus on DESCRIPTION):
+- Title: "Find Target Sum" + Description about array and target → "Two Sum" (https://leetcode.com/problems/two-sum/)
+- Title: "Check Valid Brackets" + Description about parentheses → "Valid Parentheses" (https://leetcode.com/problems/valid-parentheses/)
+- Title: "Combine Sorted Arrays" + Description about merging → "Merge Two Sorted Lists" (https://leetcode.com/problems/merge-two-sorted-lists/)
+- Title: "Palindrome Check" + Description about string → "Valid Palindrome" (https://leetcode.com/problems/valid-palindrome/)
+- Title: "Binary Tree Traversal" + Description about inorder → "Binary Tree Inorder Traversal" (https://leetcode.com/problems/binary-tree-inorder-traversal/)
+- Title: "Reverse Integer" + Description about reversing digits → "Reverse Integer" (https://leetcode.com/problems/reverse-integer/)
+- Title: "Find Duplicate" + Description about array with duplicates → "Find the Duplicate Number" (https://leetcode.com/problems/find-the-duplicate-number/)
+- Title: "Longest Common Prefix" + Description about strings → "Longest Common Prefix" (https://leetcode.com/problems/longest-common-prefix/)
+- Title: "Remove Element" + Description about removing values → "Remove Element" (https://leetcode.com/problems/remove-element/)
+- Title: "Search Insert Position" + Description about sorted array → "Search Insert Position" (https://leetcode.com/problems/search-insert-position/)
+
+REQUIRED JSON RESPONSE:
+{
+  "leetcode_link": "https://leetcode.com/problems/exact-problem-name/ OR null if not found",
+  "similar_problems": [
+    {
+      "title": "Exact LeetCode problem title",
+      "platform": "LeetCode", 
+      "difficulty": "Easy/Medium/Hard",
+      "link": "https://leetcode.com/problems/problem-name/"
+    }
+  ],
+  "topics": ["Array", "Hash Table", "Two Pointers"],
+  "difficulty_estimate": "Easy/Medium/Hard",
+  "complexity_analysis": {
+    "time": "O(n) - based on optimal solution analysis",
+    "space": "O(1) - based on optimal solution analysis"
+  }
+}
+
+IMPORTANT NOTES:
+- Prioritize DESCRIPTION analysis over title matching
+- Look for core algorithmic patterns: two pointers, sliding window, DFS/BFS, dynamic programming, etc.
+- Match problem constraints and expected output format
+- Consider edge cases mentioned in the description
+- Only include verified LeetCode problems with correct URLs
+
+RESPOND WITH ONLY THE JSON - NO ADDITIONAL TEXT OR MARKDOWN.`;
+
+  const model = 'gemini-2.0-flash';
+
+  try {
+    console.log(`Using AI model: ${model}`);
+    console.log('Analyzing problem:', { title, description: description?.substring(0, 100) + '...' });
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-goog-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: prompt
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 2000,
+          topP: 0.8,
+          topK: 10
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`API request failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
+      throw new Error('Invalid response format from Gemini API');
+    }
+
+    const aiResponse = data.candidates[0].content.parts[0].text;
+
+    // Try to parse JSON from the response
+    try {
+      // Extract JSON from the response (in case it's wrapped in markdown or other text)
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsedData = JSON.parse(jsonMatch[0]);
+
+        // Clean up the response to ensure no fake data
+        cleanAIResponse(parsedData);
+
+        // Add model info to response
+        parsedData._model_used = model;
+
+        console.log(`Successfully got response from model: ${model}`);
+        console.log('AI Response:', parsedData); // Debug log
+        return parsedData;
+      } else {
+        throw new Error('Could not parse structured response');
+      }
+    } catch (parseError) {
+      throw new Error('Could not parse JSON response');
+    }
+  } catch (error) {
+    console.error(`AI model failed:`, error.message);
+    throw error;
+  }
+}
+
+// Clean up AI response to remove any suspicious or fake data
+function cleanAIResponse(data) {
+  // Validate and clean LeetCode link
+  if (data.leetcode_link) {
+    if (!isValidLeetCodeLink(data.leetcode_link)) {
+      console.warn('Invalid LeetCode link detected:', data.leetcode_link);
+      data.leetcode_link = null;
+    }
+  }
+
+  // Clean similar problems - validate LeetCode links only
+  if (data.similar_problems && Array.isArray(data.similar_problems)) {
+    data.similar_problems = data.similar_problems.filter(problem => {
+      // Only keep LeetCode problems
+      if (!problem.platform || !problem.platform.toLowerCase().includes('leetcode')) {
+        console.warn('Non-LeetCode platform detected:', problem.platform);
+        return false;
+      }
+
+      // Validate LeetCode links
+      if (problem.link && !isValidLeetCodeLink(problem.link)) {
+        console.warn('Invalid LeetCode problem link detected:', problem.link);
+        problem.link = null;
+      }
+
+      return problem.title && problem.platform;
+    });
+  }
+
+  // Remove alternative platforms - we only want LeetCode
+  delete data.alternative_platforms;
+
+  return data;
+}
+
+// Validate LeetCode links more strictly
+function isValidLeetCodeLink(url) {
+  try {
+    const urlObj = new URL(url);
+
+    // Must be leetcode.com domain
+    if (!urlObj.hostname.includes('leetcode.com')) {
+      return false;
+    }
+
+    // Must contain /problems/ path
+    if (!url.includes('/problems/')) {
+      return false;
+    }
+
+    // Check for problematic patterns
+    const problematicPatterns = [
+      'example',
+      'placeholder',
+      'fake-url',
+      'test-link',
+      '...',
+      'sample',
+      'dummy'
+    ];
+
+    for (const pattern of problematicPatterns) {
+      if (url.toLowerCase().includes(pattern)) {
+        return false;
+      }
+    }
+
+    // Valid LeetCode problem URL pattern
+    const leetcodePattern = /^https:\/\/leetcode\.com\/problems\/[a-z0-9-]+\/?$/;
+    return leetcodePattern.test(url);
+
+  } catch {
+    return false;
+  }
+}
+
+
+
+
+
+
+
 
 async function getStatistics() {
   // Use local data if available for faster response
@@ -600,14 +840,14 @@ async function getStatistics() {
 // Handle extension installation
 chrome.runtime.onInstalled.addListener(() => {
   console.log('TufToLeetcode extension installed');
-  
+
   // Create context menu for selected text
   chrome.contextMenus.create({
     id: 'searchLeetCode',
     title: 'Search "%s" on LeetCode',
     contexts: ['selection']
   });
-  
+
   // Initialize keep-alive on installation
   keepServiceWorkerAlive();
 });
@@ -626,7 +866,7 @@ chrome.runtime.onSuspend.addListener(() => {
     clearInterval(keepAliveInterval);
   }
   chrome.alarms.clear('keepAlive');
-  
+
   // Store suspension time
   chrome.storage.local.set({
     lastSuspension: new Date().toISOString(),
@@ -651,7 +891,7 @@ self.addEventListener('activate', (event) => {
 });
 
 // Handle tab updates to keep extension responsive
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
   // Only react to completed page loads on relevant sites
   if (changeInfo.status === 'complete' && tab.url) {
     if (tab.url.includes('leetcode.com') || tab.url.includes('takeuforward.org')) {
@@ -666,7 +906,7 @@ chrome.action.onClicked.addListener(() => {
   keepServiceWorkerAlive();
 });
 
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+chrome.contextMenus.onClicked.addListener((info, _tab) => {
   if (info.menuItemId === 'searchLeetCode') {
     chrome.storage.local.set({
       pendingSearch: info.selectionText

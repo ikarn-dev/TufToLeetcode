@@ -833,3 +833,44 @@ button:disabled {
   font-size: 9px;
   color: #ef4444;
 }
+
+/* AI Section Styles */
+.ai-section {
+  padding: 6px 16px;
+  border-top: 1px solid #333;
+  background: #2a2a2a;
+  flex-shrink: 0;
+}
+
+.ai-title {
+  font-size: 9px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.ai-settings-btn {
+  width: 100%;
+  padding: 6px 10px;
+  background: transparent;
+  color: #e5e5e5;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.ai-settings-btn:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.5);
+}

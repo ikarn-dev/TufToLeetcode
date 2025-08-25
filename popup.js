@@ -14,6 +14,14 @@ document.addEventListener('DOMContentLoaded', function () {
   loadStatistics();
   loadDailyProblem();
 
+  // AI Settings button handler
+  const aiSettingsBtn = document.getElementById('aiSettingsBtn');
+  if (aiSettingsBtn) {
+    aiSettingsBtn.addEventListener('click', () => {
+      chrome.runtime.sendMessage({ action: 'openAISettings' });
+    });
+  }
+
   // Check for pending search from background script
   chrome.storage.local.get(['pendingSearch', 'pendingDescription'], function (data) {
     if (data.pendingSearch) {
